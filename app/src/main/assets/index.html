@@ -3,18 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#111418">
+<meta name="theme-color" content="#0a0710">
 <title>BroteinBro</title>
 <style>
   :root {
-    --bg: #111418;
-    --panel: #1a1f26;
-    --tile: #232a33;
-    --text: #f2f5f8;
-    --muted: #8b97a6;
-    --accent: #ff8a1f;
-    --good: #35d07f;
-    --danger: #ff5c5c;
+    --bg: #0a0710;
+    --panel: #151024;
+    --tile: #1c1530;
+    --line: #2a2040;
+    --text: #f4f0ff;
+    --muted: #9a8fb5;
+    --purple: #a855f7;
+    --purple-deep: #7c3aed;
+    --green: #39ff4d;
+    --danger: #ff5c7a;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
@@ -25,29 +27,38 @@
   button, .tile { touch-action: manipulation; }
   #app {
     height: 100%; display: flex; flex-direction: column;
-    padding: env(safe-area-inset-top) 12px calc(env(safe-area-inset-bottom) + 12px);
+    padding: env(safe-area-inset-top) 12px calc(env(safe-area-inset-bottom) + 8px);
     max-width: 560px; margin: 0 auto;
+    background: radial-gradient(120% 60% at 50% 0%, rgba(168,85,247,.16), transparent 60%);
   }
 
   /* Header / big number */
   .topbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 2px 0; }
-  .brand { font-weight: 800; letter-spacing: .5px; font-size: 18px; }
-  .brand span { color: var(--accent); }
+  .brand { font-weight: 900; letter-spacing: .5px; font-size: 20px; color: var(--purple); }
+  .brand b { color: var(--green); font-weight: 900; }
+  .brand .cur { color: var(--green); margin-left: 2px; animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
   .gear {
-    width: 42px; height: 42px; border-radius: 50%; border: none; background: var(--panel);
-    color: var(--text); font-size: 22px; cursor: pointer;
+    width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--purple); background: var(--panel);
+    color: var(--purple); font-size: 22px; cursor: pointer;
   }
   .display {
     flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-align: center; padding: 8px 0;
   }
   .label { color: var(--muted); font-size: 13px; letter-spacing: 2px; font-weight: 700; }
-  .big { font-size: clamp(72px, 24vw, 128px); font-weight: 900; line-height: 1; margin: 6px 0; font-variant-numeric: tabular-nums; }
-  .big.done { color: var(--good); }
+  .big {
+    font-size: clamp(72px, 24vw, 128px); font-weight: 900; line-height: 1.05; margin: 6px 0;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(90deg, var(--purple), var(--green));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 18px rgba(168,85,247,.35));
+  }
+  .big.done { background: none; -webkit-text-fill-color: var(--green); filter: drop-shadow(0 0 18px rgba(57,255,77,.4)); }
   .sub { color: var(--muted); font-size: 15px; min-height: 20px; }
   .bar { width: 80%; height: 10px; background: var(--panel); border-radius: 99px; margin-top: 14px; overflow: hidden; }
-  .bar > i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .2s; }
-  .bar > i.done { background: var(--good); }
+  .bar > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--purple), var(--green)); border-radius: 99px; transition: width .2s; }
+  .bar > i.done { background: var(--green); }
 
   /* Grid */
   .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -57,24 +68,32 @@
     color: var(--text); display: block; width: 100%;
   }
   .tile:active { transform: scale(.96); }
-  .tile.has { border-color: transparent; }
-  .tile.active { border-color: var(--accent); }
+  .tile.active { border-color: var(--green); box-shadow: 0 0 12px rgba(57,255,77,.35); }
   .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-  .tile .noimg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--muted); }
+  .tile .noimg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--purple); }
   .tile .cap {
     position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 4px 3px;
-    background: linear-gradient(transparent, rgba(0,0,0,.85));
+    background: linear-gradient(transparent, rgba(5,2,10,.9));
     font-size: 11px; line-height: 1.1; text-align: center; font-weight: 700;
     pointer-events: none;
   }
-  .tile .cap small { display: block; color: var(--accent); font-weight: 800; font-size: 11px; }
+  .tile .cap small { display: block; color: var(--green); font-weight: 800; font-size: 11px; }
   .tile .badge {
     position: absolute; top: 4px; right: 4px; min-width: 24px; height: 24px; padding: 0 6px;
-    border-radius: 99px; background: var(--accent); color: #111; font-weight: 900; font-size: 14px;
+    border-radius: 99px; background: var(--green); color: #07140a; font-weight: 900; font-size: 14px;
     display: none; align-items: center; justify-content: center; pointer-events: none;
   }
   .tile.active .badge { display: flex; }
-  .tile.empty { border: 2px dashed #36404c; background: transparent; }
+  .tile.empty { border: 2px dashed #3a2c57; background: transparent; }
+
+  /* Bottom bar */
+  .bottombar { display: flex; justify-content: flex-end; padding-top: 10px; }
+  .histbtn {
+    display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--purple); background: var(--panel);
+    color: var(--text); font-size: 15px; font-weight: 800; border-radius: 99px; padding: 10px 18px; cursor: pointer;
+  }
+  .histbtn svg { width: 18px; height: 18px; }
+  .histbtn:active { background: var(--purple-deep); }
 
   /* Overlays */
   .overlay { position: fixed; inset: 0; background: var(--bg); z-index: 10; display: none; flex-direction: column; }
@@ -86,31 +105,55 @@
   .field { margin-bottom: 18px; }
   .field > label { display: block; color: var(--muted); font-size: 13px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; }
   input[type=number], input[type=text] {
-    width: 100%; padding: 14px; border-radius: 12px; border: 2px solid #2b3440; background: var(--panel);
+    width: 100%; padding: 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--panel);
     color: var(--text); font-size: 18px; outline: none; user-select: text; -webkit-user-select: text;
   }
-  input:focus { border-color: var(--accent); }
+  input:focus { border-color: var(--purple); }
   .btn {
     border: none; border-radius: 12px; padding: 14px 18px; font-size: 16px; font-weight: 800; cursor: pointer;
     background: var(--panel); color: var(--text);
   }
-  .btn.primary { background: var(--accent); color: #111; }
+  .btn.primary { background: linear-gradient(135deg, var(--purple), var(--purple-deep)); color: #fff; }
   .btn.danger { color: var(--danger); }
   .row { display: flex; gap: 10px; }
   .row > * { flex: 1; }
   .hint { color: var(--muted); font-size: 13px; margin: 6px 0 10px; }
+  .version { text-align: center; color: var(--muted); font-size: 12px; margin-top: 8px; }
+  .version b { color: var(--purple); } .version i { color: var(--green); font-style: normal; font-weight: 700; }
 
   .preview {
     width: 140px; height: 140px; border-radius: 18px; background: var(--panel); margin: 0 auto 12px;
     display: flex; align-items: center; justify-content: center; color: var(--muted); overflow: hidden; font-size: 40px;
   }
   .preview img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* History */
+  .readout { background: var(--panel); border: 1.5px solid var(--line); border-radius: 16px; padding: 12px 14px; margin-bottom: 12px; }
+  .readout .d { color: var(--muted); font-size: 13px; font-weight: 700; letter-spacing: 1px; }
+  .readout .v { font-size: 30px; font-weight: 900; margin-top: 2px; }
+  .readout .v.met { color: var(--green); }
+  .readout .v.under { color: var(--purple); }
+  .readout .v.none { color: var(--muted); }
+  .readout .s { color: var(--muted); font-size: 14px; margin-top: 2px; }
+  .chartwrap { background: #07040d; border: 1.5px solid var(--line); border-radius: 16px; padding: 10px 8px 6px; touch-action: pan-y; }
+  .chartwrap svg { display: block; width: 100%; height: auto; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; color: var(--muted); font-size: 12px; margin: 10px 0 14px; }
+  .legend span { display: flex; align-items: center; gap: 6px; }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .legend i.dash { height: 0; width: 16px; border-top: 2px dashed #fff; border-radius: 0; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+  .stat { background: var(--panel); border: 1.5px solid var(--line); border-radius: 14px; padding: 10px 6px; text-align: center; }
+  .stat .k { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+  .stat .n { font-size: 20px; font-weight: 900; margin-top: 4px; }
+  .stat:nth-child(1) .n { color: var(--purple); }
+  .stat:nth-child(2) .n { color: var(--green); }
+  .stat:nth-child(3) .n { color: #fff; }
 </style>
 </head>
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="brand">Brotein<span>Bro</span></div>
+    <div class="brand">Brotein<b>Bro</b><span class="cur">_</span></div>
     <button class="gear" id="openSettings" aria-label="Settings">&#9881;</button>
   </div>
 
@@ -122,6 +165,46 @@
   </div>
 
   <div class="grid" id="grid"></div>
+
+  <div class="bottombar">
+    <button class="histbtn" id="openHistory" aria-label="History">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3" y="12" width="4" height="9" rx="1" fill="#a855f7"/>
+        <rect x="10" y="4" width="4" height="17" rx="1" fill="#39ff4d"/>
+        <rect x="17" y="9" width="4" height="12" rx="1" fill="#a855f7"/>
+      </svg>
+      History
+    </button>
+  </div>
+</div>
+
+<!-- History -->
+<div class="overlay" id="history">
+  <div class="sheet">
+    <header>
+      <h2>History <span style="color:var(--muted);font-weight:600;font-size:14px">last 30 days</span></h2>
+      <button class="btn primary" id="closeHistory">Done</button>
+    </header>
+    <div class="scroll">
+      <div class="readout">
+        <div class="d" id="hDate">TODAY</div>
+        <div class="v none" id="hVal">-</div>
+        <div class="s" id="hSub"></div>
+      </div>
+      <div class="chartwrap" id="chart"></div>
+      <div class="legend">
+        <span><i style="background:var(--purple)"></i>Under goal</span>
+        <span><i style="background:var(--green)"></i>Goal met</span>
+        <span><i class="dash"></i>Goal line</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">AVERAGE</div><div class="n" id="stAvg">-</div></div>
+        <div class="stat"><div class="k">GOAL MET</div><div class="n" id="stHit">-</div></div>
+        <div class="stat"><div class="k">BEST DAY</div><div class="n" id="stBest">-</div></div>
+      </div>
+      <div class="hint" style="text-align:center">Touch or drag across the bars to see each day.</div>
+    </div>
+  </div>
 </div>
 
 <!-- Settings -->
@@ -142,10 +225,12 @@
         <div class="grid" id="settingsGrid"></div>
       </div>
       <div class="field">
-        <label>TODAY</label>
-        <button class="btn danger" id="resetToday" style="width:100%">Reset today's counts</button>
-        <div class="hint">Counts also reset automatically each new day.</div>
+        <label>DATA</label>
+        <button class="btn danger" id="resetToday" style="width:100%;margin-bottom:10px">Reset today's counts</button>
+        <button class="btn danger" id="clearHistory" style="width:100%">Clear history</button>
+        <div class="hint">Counts reset automatically each new day. Each day's total is saved to History.</div>
       </div>
+      <div class="version"><b>Brotein</b><i>Bro</i> v1.1</div>
     </div>
   </div>
 </div>
@@ -185,13 +270,21 @@
   var KEY = 'broteinbro.v1';
   var SLOTS = 16;
   var DOUBLE_MS = 320;
+  var DAYS = 30;
+  var KEEP_DAYS = 120;
 
-  function today() {
-    var d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function dateKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function today() { return dateKey(new Date()); }
 
-  var state = { goal: 130, items: new Array(SLOTS).fill(null), counts: new Array(SLOTS).fill(0), date: today() };
+  var state = {
+    goal: 130,
+    items: new Array(SLOTS).fill(null),
+    counts: new Array(SLOTS).fill(0),
+    date: today(),
+    history: {}
+  };
 
   function load() {
     try {
@@ -202,18 +295,32 @@
         if (Array.isArray(s.items)) for (var i = 0; i < SLOTS; i++) state.items[i] = s.items[i] || null;
         if (Array.isArray(s.counts)) for (var j = 0; j < SLOTS; j++) state.counts[j] = s.counts[j] || 0;
         if (s.date) state.date = s.date;
+        if (s.history && typeof s.history === 'object') state.history = s.history;
       }
     } catch (e) {}
     rolloverIfNewDay();
+    save();
   }
+
+  // Remember today's total so History can chart it
+  function recordToday() {
+    var p = Math.round(consumed() * 10) / 10;
+    if (p > 0) state.history[state.date] = { p: p, g: state.goal };
+    else delete state.history[state.date];
+    var cutoff = dateKey(addDays(new Date(), -KEEP_DAYS));
+    for (var k in state.history) if (k < cutoff) delete state.history[k];
+  }
+
   function save() {
+    recordToday();
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
   }
+
   function rolloverIfNewDay() {
     var t = today();
     if (state.date !== t) {
-      state.counts = new Array(SLOTS).fill(0);
       state.date = t;
+      state.counts = new Array(SLOTS).fill(0);
       save();
       return true;
     }
@@ -340,6 +447,143 @@
     updateDisplay();
   });
 
+  /* ---------- History ---------- */
+  var histSel = DAYS - 1;
+  var dragging = false;
+  var chartDays = [];
+  var CH = { W: 360, H: 230, pl: 34, pr: 8, pt: 10, pb: 26 };
+
+  function buildDays() {
+    var out = [];
+    var now = new Date();
+    for (var i = DAYS - 1; i >= 0; i--) {
+      var d = addDays(now, -i);
+      var k = dateKey(d);
+      var e = state.history[k];
+      out.push({ key: k, date: d, p: e ? e.p : null, g: e ? e.g : state.goal });
+    }
+    return out;
+  }
+
+  function niceStep(maxV) {
+    var steps = [10, 20, 25, 50, 100, 200, 500];
+    for (var i = 0; i < steps.length; i++) if (Math.ceil(maxV / steps[i]) <= 5) return steps[i];
+    return 1000;
+  }
+
+  function renderHistory() {
+    var days = chartDays = buildDays();
+    var W = CH.W, H = CH.H, pl = CH.pl, pr = CH.pr, pt = CH.pt, pb = CH.pb;
+    var pw = W - pl - pr, ph = H - pt - pb, slot = pw / DAYS, bw = slot * 0.68;
+
+    var maxV = state.goal;
+    days.forEach(function (d) { if (d.p != null && d.p > maxV) maxV = d.p; });
+    if (!(maxV > 0)) maxV = 100;
+    var step = niceStep(maxV);
+    var top = step * Math.ceil(maxV / step);
+    function yv(v) { return pt + ph - (v / top) * ph; }
+
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Protein per day for the last 30 days">';
+
+    // grid + y labels
+    for (var v = 0; v <= top + 0.001; v += step) {
+      var y = yv(v);
+      s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y + '" y2="' + y + '" stroke="#2a2040" stroke-width="1"/>';
+      s += '<text x="' + (pl - 5) + '" y="' + (y + 3) + '" text-anchor="end" font-size="9" fill="#e9e2ff">' + v + '</text>';
+    }
+
+    // selected column highlight
+    s += '<rect x="' + (pl + histSel * slot) + '" y="' + pt + '" width="' + slot + '" height="' + ph + '" fill="#ffffff" fill-opacity="0.09" rx="2"/>';
+
+    // bars
+    days.forEach(function (d, i) {
+      var x = pl + i * slot + (slot - bw) / 2;
+      if (d.p == null) {
+        s += '<rect x="' + x + '" y="' + (pt + ph - 1.5) + '" width="' + bw + '" height="1.5" fill="#2a2040"/>';
+        return;
+      }
+      var h = Math.max(2, (d.p / top) * ph);
+      var met = d.p >= d.g;
+      var isToday = i === DAYS - 1;
+      s += '<rect x="' + x + '" y="' + (pt + ph - h) + '" width="' + bw + '" height="' + h + '" rx="2" fill="' + (met ? '#39ff4d' : '#a855f7') + '"' +
+           (isToday ? ' stroke="#ffffff" stroke-width="1.2"' : '') + '/>';
+    });
+
+    // goal line
+    var gy = yv(state.goal);
+    s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + gy + '" y2="' + gy + '" stroke="#ffffff" stroke-opacity="0.9" stroke-width="1.2" stroke-dasharray="4 3"/>';
+
+    // x labels
+    [0, 6, 12, 18, 24, 29].forEach(function (i) {
+      var d = days[i].date;
+      var cx = pl + i * slot + slot / 2;
+      var anchor = i === DAYS - 1 ? 'end' : 'middle';
+      var tx = i === DAYS - 1 ? cx + 7 : cx;
+      s += '<text x="' + tx + '" y="' + (H - 8) + '" text-anchor="' + anchor + '" font-size="9" fill="#e9e2ff">' + (d.getMonth() + 1) + '/' + d.getDate() + '</text>';
+    });
+
+    s += '</svg>';
+    $('chart').innerHTML = s;
+
+    // readout
+    var sel = days[histSel];
+    var isTodaySel = histSel === DAYS - 1;
+    var dateLabel = sel.date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
+    $('hDate').textContent = isTodaySel ? 'TODAY · ' + dateLabel : dateLabel;
+    var hv = $('hVal'), hs = $('hSub');
+    if (sel.p == null) {
+      hv.textContent = 'No data';
+      hv.className = 'v none';
+      hs.textContent = 'Nothing logged this day.';
+    } else {
+      var met2 = sel.p >= sel.g;
+      hv.textContent = fmt(sel.p) + 'g';
+      hv.className = 'v ' + (met2 ? 'met' : 'under');
+      var pc = sel.g > 0 ? Math.round(sel.p / sel.g * 100) : 0;
+      hs.textContent = pc + '% of ' + fmt(sel.g) + 'g goal' + (met2 ? ' · goal met' : '');
+    }
+
+    // stats
+    var logged = days.filter(function (d) { return d.p != null; });
+    if (logged.length) {
+      var sum = 0, hit = 0, best = 0;
+      logged.forEach(function (d) { sum += d.p; if (d.p >= d.g) hit++; if (d.p > best) best = d.p; });
+      $('stAvg').textContent = fmt(sum / logged.length) + 'g';
+      $('stHit').textContent = hit + '/' + logged.length;
+      $('stBest').textContent = fmt(best) + 'g';
+    } else {
+      $('stAvg').textContent = '-';
+      $('stHit').textContent = '-';
+      $('stBest').textContent = '-';
+    }
+  }
+
+  function selectFromEvent(e) {
+    var svg = $('chart').querySelector('svg');
+    if (!svg) return;
+    var r = svg.getBoundingClientRect();
+    var x = (e.clientX - r.left) / r.width * CH.W;
+    var slot = (CH.W - CH.pl - CH.pr) / DAYS;
+    var idx = Math.floor((x - CH.pl) / slot);
+    idx = Math.max(0, Math.min(DAYS - 1, idx));
+    if (idx !== histSel) { histSel = idx; renderHistory(); }
+  }
+  var chartEl = $('chart');
+  chartEl.addEventListener('pointerdown', function (e) { dragging = true; selectFromEvent(e); });
+  chartEl.addEventListener('pointermove', function (e) { if (dragging) selectFromEvent(e); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) {
+    chartEl.addEventListener(n, function () { dragging = false; });
+  });
+
+  $('openHistory').addEventListener('click', function () {
+    rolloverIfNewDay();
+    save();
+    histSel = DAYS - 1;
+    renderHistory();
+    $('history').classList.add('show');
+  });
+  $('closeHistory').addEventListener('click', function () { $('history').classList.remove('show'); });
+
   /* ---------- Settings ---------- */
   function renderSettingsGrid() {
     var g = $('settingsGrid');
@@ -374,6 +618,12 @@
       updateDisplay();
     }
   });
+  $('clearHistory').addEventListener('click', function () {
+    if (confirm('Delete all saved history? Today\'s current counts are kept.')) {
+      state.history = {};
+      save();
+    }
+  });
 
   /* ---------- Editor ---------- */
   var editIndex = -1, editImg = null;
@@ -386,7 +636,7 @@
       im.src = editImg; im.alt = '';
       p.appendChild(im);
     } else {
-      p.textContent = '\uD83D\uDCF7';
+      p.textContent = '📷';
     }
   }
 
@@ -451,10 +701,11 @@
     updateDisplay();
   });
 
-  // Android back button: close editor/settings first
+  // Android back button: close the top-most screen first
   window.__back = function () {
     if ($('editor').classList.contains('show')) { closeEditor(); return true; }
     if ($('settings').classList.contains('show')) { $('closeSettings').click(); return true; }
+    if ($('history').classList.contains('show')) { $('history').classList.remove('show'); return true; }
     return false;
   };
 

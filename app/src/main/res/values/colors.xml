@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bb_bg">#111418</color>
-    <color name="bb_orange">#FF8A1F</color>
+    <color name="bb_bg">#0A0710</color>
+    <color name="bb_purple">#A855F7</color>
+    <color name="bb_green">#39FF4D</color>
 </resources>
