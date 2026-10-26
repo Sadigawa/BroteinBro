@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#111418">
+<title>BroteinBro</title>
+<style>
+  :root {
+    --bg: #111418;
+    --panel: #1a1f26;
+    --tile: #232a33;
+    --text: #f2f5f8;
+    --muted: #8b97a6;
+    --accent: #ff8a1f;
+    --good: #35d07f;
+    --danger: #ff5c5c;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overscroll-behavior: none; user-select: none; -webkit-user-select: none;
+  }
+  button, .tile { touch-action: manipulation; }
+  #app {
+    height: 100%; display: flex; flex-direction: column;
+    padding: env(safe-area-inset-top) 12px calc(env(safe-area-inset-bottom) + 12px);
+    max-width: 560px; margin: 0 auto;
+  }
+
+  /* Header / big number */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 2px 0; }
+  .brand { font-weight: 800; letter-spacing: .5px; font-size: 18px; }
+  .brand span { color: var(--accent); }
+  .gear {
+    width: 42px; height: 42px; border-radius: 50%; border: none; background: var(--panel);
+    color: var(--text); font-size: 22px; cursor: pointer;
+  }
+  .display {
+    flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 8px 0;
+  }
+  .label { color: var(--muted); font-size: 13px; letter-spacing: 2px; font-weight: 700; }
+  .big { font-size: clamp(72px, 24vw, 128px); font-weight: 900; line-height: 1; margin: 6px 0; font-variant-numeric: tabular-nums; }
+  .big.done { color: var(--good); }
+  .sub { color: var(--muted); font-size: 15px; min-height: 20px; }
+  .bar { width: 80%; height: 10px; background: var(--panel); border-radius: 99px; margin-top: 14px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .2s; }
+  .bar > i.done { background: var(--good); }
+
+  /* Grid */
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .tile {
+    position: relative; aspect-ratio: 1; border-radius: 14px; overflow: hidden;
+    background: var(--tile); border: 2px solid transparent; cursor: pointer; padding: 0;
+    color: var(--text); display: block; width: 100%;
+  }
+  .tile:active { transform: scale(.96); }
+  .tile.has { border-color: transparent; }
+  .tile.active { border-color: var(--accent); }
+  .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+  .tile .noimg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--muted); }
+  .tile .cap {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 4px 3px;
+    background: linear-gradient(transparent, rgba(0,0,0,.85));
+    font-size: 11px; line-height: 1.1; text-align: center; font-weight: 700;
+    pointer-events: none;
+  }
+  .tile .cap small { display: block; color: var(--accent); font-weight: 800; font-size: 11px; }
+  .tile .badge {
+    position: absolute; top: 4px; right: 4px; min-width: 24px; height: 24px; padding: 0 6px;
+    border-radius: 99px; background: var(--accent); color: #111; font-weight: 900; font-size: 14px;
+    display: none; align-items: center; justify-content: center; pointer-events: none;
+  }
+  .tile.active .badge { display: flex; }
+  .tile.empty { border: 2px dashed #36404c; background: transparent; }
+
+  /* Overlays */
+  .overlay { position: fixed; inset: 0; background: var(--bg); z-index: 10; display: none; flex-direction: column; }
+  .overlay.show { display: flex; }
+  .sheet { width: 100%; max-width: 560px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; padding: env(safe-area-inset-top) 14px env(safe-area-inset-bottom); }
+  .sheet header { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
+  .sheet h2 { margin: 0; font-size: 20px; }
+  .scroll { overflow-y: auto; flex: 1; padding-bottom: 20px; }
+  .field { margin-bottom: 18px; }
+  .field > label { display: block; color: var(--muted); font-size: 13px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; }
+  input[type=number], input[type=text] {
+    width: 100%; padding: 14px; border-radius: 12px; border: 2px solid #2b3440; background: var(--panel);
+    color: var(--text); font-size: 18px; outline: none; user-select: text; -webkit-user-select: text;
+  }
+  input:focus { border-color: var(--accent); }
+  .btn {
+    border: none; border-radius: 12px; padding: 14px 18px; font-size: 16px; font-weight: 800; cursor: pointer;
+    background: var(--panel); color: var(--text);
+  }
+  .btn.primary { background: var(--accent); color: #111; }
+  .btn.danger { color: var(--danger); }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .hint { color: var(--muted); font-size: 13px; margin: 6px 0 10px; }
+
+  .preview {
+    width: 140px; height: 140px; border-radius: 18px; background: var(--panel); margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center; color: var(--muted); overflow: hidden; font-size: 40px;
+  }
+  .preview img { width: 100%; height: 100%; object-fit: cover; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand">Brotein<span>Bro</span></div>
+    <button class="gear" id="openSettings" aria-label="Settings">&#9881;</button>
+  </div>
+
+  <div class="display">
+    <div class="label" id="label">PROTEIN LEFT</div>
+    <div class="big" id="big">130g</div>
+    <div class="sub" id="sub"></div>
+    <div class="bar"><i id="barFill"></i></div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<!-- Settings -->
+<div class="overlay" id="settings">
+  <div class="sheet">
+    <header>
+      <h2>Settings</h2>
+      <button class="btn primary" id="closeSettings">Done</button>
+    </header>
+    <div class="scroll">
+      <div class="field">
+        <label for="goalInput">DAILY PROTEIN GOAL (GRAMS)</label>
+        <input type="number" id="goalInput" inputmode="decimal" min="0" step="1">
+      </div>
+      <div class="field">
+        <label>YOUR 16 FOODS</label>
+        <div class="hint">Tap a square to add or edit its photo, name and protein.</div>
+        <div class="grid" id="settingsGrid"></div>
+      </div>
+      <div class="field">
+        <label>TODAY</label>
+        <button class="btn danger" id="resetToday" style="width:100%">Reset today's counts</button>
+        <div class="hint">Counts also reset automatically each new day.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item editor -->
+<div class="overlay" id="editor" style="z-index:20">
+  <div class="sheet">
+    <header>
+      <h2 id="editorTitle">Food 1</h2>
+      <button class="btn" id="editorCancel">Cancel</button>
+    </header>
+    <div class="scroll">
+      <div class="preview" id="preview">&#128247;</div>
+      <div class="row" style="margin-bottom:18px">
+        <button class="btn" id="pickPhoto">Choose photo</button>
+        <button class="btn" id="clearPhoto">Remove photo</button>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" hidden>
+      <div class="field">
+        <label for="nameInput">NAME</label>
+        <input type="text" id="nameInput" maxlength="24" placeholder="e.g. Egg">
+      </div>
+      <div class="field">
+        <label for="proteinInput">PROTEIN PER TAP (GRAMS)</label>
+        <input type="number" id="proteinInput" inputmode="decimal" min="0" step="0.1" placeholder="e.g. 6">
+      </div>
+      <div class="row">
+        <button class="btn danger" id="editorDelete">Delete food</button>
+        <button class="btn primary" id="editorSave">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var KEY = 'broteinbro.v1';
+  var SLOTS = 16;
+  var DOUBLE_MS = 320;
+
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  var state = { goal: 130, items: new Array(SLOTS).fill(null), counts: new Array(SLOTS).fill(0), date: today() };
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        if (typeof s.goal === 'number') state.goal = s.goal;
+        if (Array.isArray(s.items)) for (var i = 0; i < SLOTS; i++) state.items[i] = s.items[i] || null;
+        if (Array.isArray(s.counts)) for (var j = 0; j < SLOTS; j++) state.counts[j] = s.counts[j] || 0;
+        if (s.date) state.date = s.date;
+      }
+    } catch (e) {}
+    rolloverIfNewDay();
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function rolloverIfNewDay() {
+    var t = today();
+    if (state.date !== t) {
+      state.counts = new Array(SLOTS).fill(0);
+      state.date = t;
+      save();
+      return true;
+    }
+    return false;
+  }
+
+  function fmt(n) {
+    var r = Math.round(n * 10) / 10;
+    return (r % 1 === 0) ? String(r) : r.toFixed(1);
+  }
+  function consumed() {
+    var sum = 0;
+    for (var i = 0; i < SLOTS; i++) if (state.items[i]) sum += state.counts[i] * state.items[i].protein;
+    return sum;
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ---------- Top display ---------- */
+  function updateDisplay() {
+    var eaten = consumed();
+    var left = state.goal - eaten;
+    var big = $('big'), sub = $('sub'), label = $('label'), fill = $('barFill');
+    if (left > 0) {
+      label.textContent = 'PROTEIN LEFT';
+      big.textContent = fmt(left) + 'g';
+      big.classList.remove('done');
+      sub.textContent = fmt(eaten) + 'g of ' + fmt(state.goal) + 'g eaten';
+      fill.classList.remove('done');
+    } else {
+      label.textContent = 'GOAL HIT';
+      big.textContent = '0g';
+      big.classList.add('done');
+      sub.textContent = eaten > state.goal ? ('+' + fmt(eaten - state.goal) + 'g over your ' + fmt(state.goal) + 'g goal') : (fmt(state.goal) + 'g reached');
+      fill.classList.add('done');
+    }
+    var pct = state.goal > 0 ? Math.min(100, (eaten / state.goal) * 100) : 0;
+    fill.style.width = pct + '%';
+  }
+
+  /* ---------- Main grid ---------- */
+  var tileEls = [];
+
+  function buildTile(i, forSettings) {
+    var it = state.items[i];
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tile ' + (it ? 'has' : 'empty');
+    b.dataset.i = i;
+    if (it) {
+      if (it.img) {
+        var img = document.createElement('img');
+        img.src = it.img; img.alt = '';
+        b.appendChild(img);
+      } else {
+        var n = document.createElement('div');
+        n.className = 'noimg';
+        n.textContent = (it.name || '?').charAt(0).toUpperCase();
+        b.appendChild(n);
+      }
+      var cap = document.createElement('div');
+      cap.className = 'cap';
+      cap.textContent = it.name || '';
+      var sm = document.createElement('small');
+      sm.textContent = fmt(it.protein) + 'g';
+      cap.appendChild(sm);
+      b.appendChild(cap);
+    } else {
+      var plus = document.createElement('div');
+      plus.className = 'noimg';
+      plus.textContent = '+';
+      b.appendChild(plus);
+    }
+    if (!forSettings) {
+      var badge = document.createElement('div');
+      badge.className = 'badge';
+      b.appendChild(badge);
+    }
+    return b;
+  }
+
+  function updateTile(i) {
+    var el = tileEls[i];
+    if (!el) return;
+    var c = state.counts[i];
+    var badge = el.querySelector('.badge');
+    if (badge) badge.textContent = c;
+    el.classList.toggle('active', !!state.items[i] && c > 0);
+  }
+
+  function renderGrid() {
+    var g = $('grid');
+    g.innerHTML = '';
+    tileEls = [];
+    for (var i = 0; i < SLOTS; i++) {
+      var t = buildTile(i, false);
+      g.appendChild(t);
+      tileEls.push(t);
+      updateTile(i);
+    }
+  }
+
+  var taps = {};
+  $('grid').addEventListener('click', function (e) {
+    var t = e.target.closest('.tile');
+    if (!t) return;
+    var i = +t.dataset.i;
+    if (!state.items[i]) { openEditor(i); return; }
+    rolloverIfNewDay();
+    var now = Date.now();
+    var last = taps[i];
+    if (last && last.t && now - last.t < DOUBLE_MS) {
+      // double tap: undo the first tap's add and remove one more
+      state.counts[i] = Math.max(0, last.prev - 1);
+      taps[i] = { t: 0, prev: state.counts[i] };
+      if (navigator.vibrate) navigator.vibrate([15, 40, 15]);
+    } else {
+      taps[i] = { t: now, prev: state.counts[i] };
+      state.counts[i] += 1;
+      if (navigator.vibrate) navigator.vibrate(12);
+    }
+    save();
+    updateTile(i);
+    updateDisplay();
+  });
+
+  /* ---------- Settings ---------- */
+  function renderSettingsGrid() {
+    var g = $('settingsGrid');
+    g.innerHTML = '';
+    for (var i = 0; i < SLOTS; i++) g.appendChild(buildTile(i, true));
+  }
+  $('settingsGrid').addEventListener('click', function (e) {
+    var t = e.target.closest('.tile');
+    if (t) openEditor(+t.dataset.i);
+  });
+  $('openSettings').addEventListener('click', function () {
+    $('goalInput').value = state.goal;
+    renderSettingsGrid();
+    $('settings').classList.add('show');
+  });
+  $('closeSettings').addEventListener('click', function () {
+    var g = parseFloat($('goalInput').value);
+    if (!isNaN(g) && g >= 0) state.goal = g;
+    save();
+    $('settings').classList.remove('show');
+    updateDisplay();
+  });
+  $('goalInput').addEventListener('input', function () {
+    var g = parseFloat($('goalInput').value);
+    if (!isNaN(g) && g >= 0) { state.goal = g; save(); updateDisplay(); }
+  });
+  $('resetToday').addEventListener('click', function () {
+    if (confirm("Reset all of today's counts to zero?")) {
+      state.counts = new Array(SLOTS).fill(0);
+      save();
+      for (var i = 0; i < SLOTS; i++) updateTile(i);
+      updateDisplay();
+    }
+  });
+
+  /* ---------- Editor ---------- */
+  var editIndex = -1, editImg = null;
+
+  function setPreview() {
+    var p = $('preview');
+    p.innerHTML = '';
+    if (editImg) {
+      var im = document.createElement('img');
+      im.src = editImg; im.alt = '';
+      p.appendChild(im);
+    } else {
+      p.textContent = '\uD83D\uDCF7';
+    }
+  }
+
+  function openEditor(i) {
+    editIndex = i;
+    var it = state.items[i];
+    editImg = it ? it.img : null;
+    $('editorTitle').textContent = 'Food ' + (i + 1);
+    $('nameInput').value = it ? it.name : '';
+    $('proteinInput').value = it ? it.protein : '';
+    $('editorDelete').style.display = it ? '' : 'none';
+    setPreview();
+    $('editor').classList.add('show');
+  }
+  function closeEditor() { $('editor').classList.remove('show'); editIndex = -1; }
+
+  $('pickPhoto').addEventListener('click', function () { $('fileInput').click(); });
+  $('clearPhoto').addEventListener('click', function () { editImg = null; setPreview(); });
+  $('fileInput').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var size = 240;
+        var c = document.createElement('canvas');
+        c.width = size; c.height = size;
+        var ctx = c.getContext('2d');
+        var s = Math.min(img.width, img.height);
+        ctx.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
+        editImg = c.toDataURL('image/jpeg', 0.82);
+        setPreview();
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(f);
+    e.target.value = '';
+  });
+
+  $('editorCancel').addEventListener('click', closeEditor);
+  $('editorSave').addEventListener('click', function () {
+    var name = $('nameInput').value.trim();
+    var protein = parseFloat($('proteinInput').value);
+    if (!name) { $('nameInput').focus(); return; }
+    if (isNaN(protein) || protein < 0) { $('proteinInput').focus(); return; }
+    state.items[editIndex] = { name: name, protein: protein, img: editImg };
+    save();
+    closeEditor();
+    renderGrid();
+    renderSettingsGrid();
+    updateDisplay();
+  });
+  $('editorDelete').addEventListener('click', function () {
+    if (!confirm('Delete this food?')) return;
+    state.items[editIndex] = null;
+    state.counts[editIndex] = 0;
+    save();
+    closeEditor();
+    renderGrid();
+    renderSettingsGrid();
+    updateDisplay();
+  });
+
+  // Android back button: close editor/settings first
+  window.__back = function () {
+    if ($('editor').classList.contains('show')) { closeEditor(); return true; }
+    if ($('settings').classList.contains('show')) { $('closeSettings').click(); return true; }
+    return false;
+  };
+
+  /* ---------- Boot ---------- */
+  load();
+  renderGrid();
+  updateDisplay();
+
+  // New day while the app stays open
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && rolloverIfNewDay()) {
+      for (var i = 0; i < SLOTS; i++) updateTile(i);
+      updateDisplay();
+    }
+  });
+})();
+</script>
+</body>
+</html>
